@@ -1,4 +1,4 @@
-# PX4-ROS2 bridge
+7# PX4-ROS2 bridge
 
 [![GitHub license](https://img.shields.io/github/license/PX4/px4_ros_com.svg)](https://github.com/PX4/px4_ros_com/blob/master/LICENSE) [![GitHub (pre-)release](https://img.shields.io/github/release-pre/PX4/px4_ros_com.svg)](https://github.com/PX4/px4_ros_com/releases/tag/beta) [![DOI](https://zenodo.org/badge/142936318.svg)](https://zenodo.org/badge/latestdoi/142936318) [![Build and Test package](https://github.com/PX4/px4_ros_com/workflows/Build%20and%20Test%20package/badge.svg?branch=master)](https://github.com/PX4/px4_ros_com/actions)
 
@@ -19,3 +19,20 @@ Use the [Issues](https://github.com/PX4/px4_ros_com/issues) section to create a 
 ## Questions and troubleshooting
 
 Reach the PX4 development team on the [PX4 Discord Server](https://discord.gg/dronecode).
+
+## Run instructions
+
+1) Start SITL: 
+```
+sh -c "PX4_SYS_AUTOSTART=4001 PX4_GZ_MODEL_POSE="0,0" PX4_GZ_MODEL=x500 ./build/px4_sitl_default/bin/px4 -i 1; bash"
+```
+
+2) Run MicroDDS: 
+```
+MicroXRCEAgent udp4 -p 8888; bash
+```
+
+3) Run offboard control as follows: 
+```
+ros2 launch px4_ros_com offboard_control.launch.py 
+```
