@@ -42,6 +42,7 @@
 #include <px4_msgs/msg/trajectory_setpoint.hpp>
 #include <px4_msgs/msg/vehicle_command.hpp>
 #include <px4_msgs/msg/vehicle_control_mode.hpp>
+#include <geometry_msgs/msg/pose.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <stdint.h>
 
@@ -61,8 +62,14 @@ public:
 		offboard_control_mode_publisher_ = this->create_publisher<OffboardControlMode>("fmu/in/offboard_control_mode", 10);
 		trajectory_setpoint_publisher_ = this->create_publisher<TrajectorySetpoint>("fmu/in/trajectory_setpoint", 10);
 		vehicle_command_publisher_ = this->create_publisher<VehicleCommand>("fmu/in/vehicle_command", 10);
+		pose_subscriber_ = this->create_subscription<geometry_msgs::msg::Pose>(
+            "pose_cmd", 10,
+            std::bind(&OffboardControl::cmd_pose_callback, this, std::placeholders::_1)
+        );
+
 
 		offboard_setpoint_counter_ = 0;
+
 
 		auto timer_callback = [this]() -> void {
 
@@ -86,6 +93,11 @@ public:
 		timer_ = this->create_wall_timer(100ms, timer_callback);
 	}
 
+
+	TrajectorySetpoint cmd_msg; 
+	bool reciv_pos_cmd = false; // Flag to check if a position command has been received
+	bool first = true; // Flag to check if this is the first time we are sending a setpoint
+
 	void arm();
 	void disarm();
 
@@ -95,6 +107,7 @@ private:
 	rclcpp::Publisher<OffboardControlMode>::SharedPtr offboard_control_mode_publisher_;
 	rclcpp::Publisher<TrajectorySetpoint>::SharedPtr trajectory_setpoint_publisher_;
 	rclcpp::Publisher<VehicleCommand>::SharedPtr vehicle_command_publisher_;
+	rclcpp::Subscription<geometry_msgs::msg::Pose>::SharedPtr pose_subscriber_;
 
 	std::atomic<uint64_t> timestamp_;   //!< common synced timestamped
 
@@ -103,6 +116,7 @@ private:
 	void publish_offboard_control_mode();
 	void publish_trajectory_setpoint();
 	void publish_vehicle_command(uint16_t command, float param1 = 0.0, float param2 = 0.0);
+	void cmd_pose_callback(const geometry_msgs::msg::Pose::SharedPtr msg);
 };
 
 /**
@@ -149,8 +163,19 @@ void OffboardControl::publish_offboard_control_mode()
 void OffboardControl::publish_trajectory_setpoint()
 {
 	TrajectorySetpoint msg{};
-	msg.position = {0.0, 0.0, -5.0};
-	msg.yaw = -3.14; // [-PI:PI]
+
+	// Publish position cmd
+	if (!reciv_pos_cmd && first){
+		// If no position command has been received, use the default position
+		msg.position = {0.0, 0.0, -5.0}; // Negate z for PX4
+		msg.yaw = -3.14; // [-PI:PI]
+		first = false; 
+	} else {
+		// Use the position from the received command
+		msg.position = cmd_msg.position; // Use the position from the received command
+		msg.yaw = cmd_msg.yaw; // Use the yaw from the received command
+	}
+
 	msg.timestamp = this->get_clock()->now().nanoseconds() / 1000;
 	trajectory_setpoint_publisher_->publish(msg);
 }
@@ -174,6 +199,22 @@ void OffboardControl::publish_vehicle_command(uint16_t command, float param1, fl
 	msg.from_external = true;
 	msg.timestamp = this->get_clock()->now().nanoseconds() / 1000;
 	vehicle_command_publisher_->publish(msg);
+}
+
+void OffboardControl::cmd_pose_callback(const geometry_msgs::msg::Pose::SharedPtr msg)
+{
+	// This callback can be used to receive pose commands from another node
+	// For example, you can use this to set the desired position of the vehicle
+	RCLCPP_INFO(this->get_logger(), "Received pose command: [x: %f, y: %f, z: %f]",
+	            msg->position.x, msg->position.y, msg->position.z);
+
+	reciv_pos_cmd = true; 
+
+	cmd_msg.position = {msg->position.x, msg->position.y, -msg->position.z}; // Negate z for PX4
+	// TODO: Set the orientation if needed 
+	cmd_msg.yaw = 0.0; // Set yaw to 0, or you can use msg->orientation if needed
+	trajectory_setpoint_publisher_->publish(cmd_msg);
+	RCLCPP_INFO(this->get_logger(), "Published trajectory setpoint based on received pose command.");
 }
 
 int main(int argc, char *argv[])
