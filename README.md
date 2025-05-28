@@ -24,8 +24,9 @@ Reach the PX4 development team on the [PX4 Discord Server](https://discord.gg/dr
 
 1) Start SITL: 
 ```
-sh -c "PX4_SYS_AUTOSTART=4001 PX4_GZ_MODEL_POSE="0,0" PX4_GZ_MODEL=x500 ./build/px4_sitl_default/bin/px4 -i 1; bash"
+PX4_GZ_WORLD=walls make px4_sitl gz_x500_depth
 ```
+Variables `PX4_GZ_WORLD=<world_name>`. 
 
 2) Run MicroDDS: 
 ```
@@ -41,3 +42,19 @@ Gazebo world is located in:
 ```
 Starting gazebo with world: /root/sitl/PX4-Autopilot/Tools/simulation/gz/worlds/default.sdf
 ```
+
+### Run bridge
+
+Run ros_gz_bridge to move image from the gz_sim to the ROS 2: 
+```
+ros2 run ros_gz_image image_bridge /world/walls/model/x500_depth_0/link/camera_link/sensor/IMX214/image /rgb_cam/image
+```
+
+### Params to disable GCS check 
+
+Set params here: 
+```
+param set NAV_RCL_ACT 0
+param set NAV_DLL_ACT 0
+```
+
