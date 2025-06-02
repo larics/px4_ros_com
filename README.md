@@ -49,6 +49,10 @@ Run ros_gz_bridge to move image from the gz_sim to the ROS 2:
 ```
 ros2 run ros_gz_image image_bridge /world/walls/model/x500_depth_0/link/camera_link/sensor/IMX214/image /rgb_cam/image
 ```
+Run ros_gz_bridge to move wrench from the gz_sim to ROS 2
+```
+ros2 run ros_gz_bridge parameter_bridge /world/walls/model/x500_stick_0/joint/cap_fixed_joint/sensor/force_torque/forcetorque@geometry_msgs/msg/WrenchMsg@gz.msgs.WrenchMsg
+```
 
 ### Params to disable GCS check 
 
