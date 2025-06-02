@@ -66,7 +66,10 @@ public:
             "pose_cmd", 10,
             std::bind(&OffboardControl::cmd_pose_callback, this, std::placeholders::_1)
         );
-
+		cmd_vel_subscriber_ = this->create_subscription<geometry_msgs::msg::Twist>(
+			"cmd_vel", 10,
+			std::bind(&OffboardControl::cmd_vel_callback, this, std::placeholders::_1)
+		);
 
 		offboard_setpoint_counter_ = 0;
 
@@ -117,6 +120,7 @@ private:
 	void publish_trajectory_setpoint();
 	void publish_vehicle_command(uint16_t command, float param1 = 0.0, float param2 = 0.0);
 	void cmd_pose_callback(const geometry_msgs::msg::Pose::SharedPtr msg);
+	void cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg); 
 };
 
 /**
@@ -131,17 +135,8 @@ void OffboardControl::arm()
 
 /**
  * @brief Send a command to Disarm the vehicle
- */
-void OffboardControl::disarm()
-{
-	publish_vehicle_command(VehicleCommand::VEHICLE_CMD_COMPONENT_ARM_DISARM, 0.0);
-
-	RCLCPP_INFO(this->get_logger(), "Disarm command send");
-}
-
-/**
- * @brief Publish the offboard control mode.
- *        For this example, only position and altitude controls are active.
+ */	cmd_msg.position = cur_pos_msg.position; // Keep the current position
+	vel_msg.yaw = cmd_msg.yaw; // Keep the current yaw
  */
 void OffboardControl::publish_offboard_control_mode()
 {
@@ -215,6 +210,21 @@ void OffboardControl::cmd_pose_callback(const geometry_msgs::msg::Pose::SharedPt
 	cmd_msg.yaw = 0.0; // Set yaw to 0, or you can use msg->orientation if needed
 	trajectory_setpoint_publisher_->publish(cmd_msg);
 	RCLCPP_INFO(this->get_logger(), "Published trajectory setpoint based on received pose command.");
+}
+
+void OffboardControl::cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg)
+{
+	// This callback can be used to receive velocity commands from another node
+	// For example, you can use this to set the desired velocity of the vehicle
+	RCLCPP_INFO(this->get_logger(), "Received velocity command: [vx: %f, vy: %f, vz: %f]",
+	            msg->linear.x, msg->linear.y, msg->linear.z);
+
+	// You can also publish a trajectory setpoint based on the received velocity command
+	TrajectorySetpoint vel_msg{};
+	vel_msg.velocity = {msg->linear.x, msg->linear.y, msg->linear.z}; // Negate z for PX4
+	vel_msg.timestamp = this->get_clock()->now().nanoseconds() / 1000;
+	//trajectory_setpoint_publisher_->publish(vel_msg);
+	RCLCPP_INFO(this->get_logger(), "Published trajectory setpoint based on received velocity command.");
 }
 
 int main(int argc, char *argv[])
