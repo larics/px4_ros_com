@@ -51,7 +51,12 @@ ros2 run ros_gz_image image_bridge /world/walls/model/x500_depth_0/link/camera_l
 ```
 Run ros_gz_bridge to move wrench from the gz_sim to ROS 2
 ```
-ros2 run ros_gz_bridge parameter_bridge /world/walls/model/x500_stick_0/joint/cap_fixed_joint/sensor/force_torque/forcetorque@geometry_msgs/msg/WrenchMsg@gz.msgs.WrenchMsg
+ros2 run ros_gz_bridge parameter_bridge /world/walls/model/x500_stick_0/joint/cap_fixed_joint/sensor/force_torque/forcetorque@geometry_msgs/msg/Wrench@gz.msgs.Wrench
+```
+
+Full force torque mapping command with topic name remapping: 
+```
+ros2 run ros_gz_bridge parameter_bridge /world/walls/model/x500_stick_0/joint/cap_fixed_joint/sensor/force_torque/forcetorque@geometry_msgs/msg/Wrench@gz.msgs.Wrench --ros-args -r /world/walls/model/x500_stick_0/joint/cap_fixed_joint/sensor/force_torque/forcetorque:=/measured_force
 ```
 
 ### Params to disable GCS check 
