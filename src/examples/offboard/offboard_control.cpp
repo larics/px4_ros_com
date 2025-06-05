@@ -136,9 +136,16 @@ void OffboardControl::arm()
 
 /**
  * @brief Send a command to Disarm the vehicle
- */	cmd_msg.position = cur_pos_msg.position; // Keep the current position
-	vel_msg.yaw = cmd_msg.yaw; // Keep the current yaw
- */
+*/
+
+void OffboardControl::disarm()
+{
+	publish_vehicle_command(VehicleCommand::VEHICLE_CMD_COMPONENT_ARM_DISARM, 0.0); 
+
+	RCLCPP_INFO(this->get_logger(), "Disarm command send"); 
+}
+
+
 void OffboardControl::publish_offboard_control_mode()
 {
 	OffboardControlMode msg{};
