@@ -112,6 +112,7 @@ private:
 	rclcpp::Publisher<TrajectorySetpoint>::SharedPtr trajectory_setpoint_publisher_;
 	rclcpp::Publisher<VehicleCommand>::SharedPtr vehicle_command_publisher_;
 	rclcpp::Subscription<geometry_msgs::msg::Pose>::SharedPtr pose_subscriber_;
+	rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_subscriber_; 
 
 	std::atomic<uint64_t> timestamp_;   //!< common synced timestamped
 
